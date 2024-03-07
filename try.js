@@ -1,10 +1,12 @@
 import { BlobServiceClient } from '@azure/storage-blob';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
-const connectionString = process.env.CONNECTIONSTRING; // Replace with your connection string
+const connectionString = process.env.CONNECTIONSTRING;
 
-const blobServiceClient = new BlobServiceClient(connectionString);
+const blobServiceClient =
+  BlobServiceClient.fromConnectionString(connectionString);
 
 async function createContainer(containerName) {
   try {
@@ -24,7 +26,7 @@ async function uploadBlob(containerName, blobName, filePath) {
   try {
     const containerClient = blobServiceClient.getContainerClient(containerName);
     const blobClient = containerClient.getBlobClient(blobName);
-    const uploadBlobResponse = await blobClient.uploadFromFile(filePath);
+    const uploadBlobResponse = await blobClient.uploadFile(filePath);
     console.log('Blob uploaded successfully:', uploadBlobResponse.requestId);
   } catch (error) {
     console.error('Error uploading blob:', error);
@@ -50,8 +52,8 @@ async function downloadBlob(containerName, blobName, downloadPath) {
 
   try {
     await createContainer(containerName);
-    // await uploadBlob(containerName, blobName, filePath);
-    // await downloadBlob(containerName, blobName, downloadPath);
+    await uploadBlob(containerName, blobName, filePath);
+    await downloadBlob(containerName, blobName, downloadPath);
   } catch (error) {
     console.error('Error:', error);
   }
