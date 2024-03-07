@@ -28,4 +28,15 @@ async function main() {
   );
 }
 
-main();
+// main();
+
+async function downloadBlobToFile(blobName, fileNameWithPath) {
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  // Create blob client from container client
+  const blobClient = containerClient.getBlobClient(blobName);
+
+  await blobClient.downloadToFile(fileNameWithPath);
+  console.log(`download of ${blobName} success`);
+}
+
+(async () => downloadBlobToFile('my-file', './downloads/my-file.txt'))();

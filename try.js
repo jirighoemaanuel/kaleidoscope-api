@@ -25,8 +25,10 @@ async function createContainer(containerName) {
 async function uploadBlob(containerName, blobName, filePath) {
   try {
     const containerClient = blobServiceClient.getContainerClient(containerName);
-    const blobClient = containerClient.getBlobClient(blobName);
-    const uploadBlobResponse = await blobClient.uploadFile(filePath);
+    // Create blob client from container client
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.uploadFile(localFilePath);
     console.log('Blob uploaded successfully:', uploadBlobResponse.requestId);
   } catch (error) {
     console.error('Error uploading blob:', error);
