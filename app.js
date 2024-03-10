@@ -1,22 +1,42 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
+import mime from 'mime-types';
 
-const upload = multer({ dest: 'uploads' });
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.static('public'));
 app.set('view engine', 'ejs');
 
-app.get('/', (req, res) => {
-  // res.render('index.ejs');
-  res.json({ msg: 'Welcome to Keleidoscope API' });
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
 });
 
-app.post('/', upload.single('file'), (req, res) => {
-  console.log(req.file);
-  res.json({ msg: 'file uploaded successfully' });
+const upload = multer({ storage: storage });
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  const fileId = req.file.filename;
+  res.json({ msg: fileId });
+});
+
+app.get('/file/:fileId', (req, res) => {
+  const fileId = req.params.fileId;
+  const filePath = `uploads/${fileId}`;
+  const resolvedPath = path.resolve(filePath);
+  const mimeType = mime.lookup(resolvedPath);
+  res.setHeader('Content-Type', mimeType);
+  res.sendFile(resolvedPath, (err) => {
+    if (err) {
+      console.error(`Error sending file: ${err}`);
+      res.status(500).send('Error sending file');
+    }
+  });
 });
 
 const server = () => {
