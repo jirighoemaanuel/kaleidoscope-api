@@ -9,9 +9,8 @@ import files from './routes/files.js';
 app.use(express.static('public'));
 app.use(express.json());
 
+// Route
 app.use('/kaleidoscope/api/v1/files', files);
-
-
 
 const server = () => {
   try {
