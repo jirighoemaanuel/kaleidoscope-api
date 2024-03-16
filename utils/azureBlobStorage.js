@@ -1,22 +1,16 @@
 import { DefaultAzureCredential } from '@azure/identity';
 import { BlobServiceClient } from '@azure/storage-blob';
-
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const connectionString = process.env.CONNECTIONSTRING;
-
 const blobServiceClient =
   BlobServiceClient.fromConnectionString(connectionString);
-
 const containerName = 'my-container';
 
-async function main() {
+export async function uploadToBlob(content, blobName) {
   const containerClient = blobServiceClient.getContainerClient(containerName);
-
-  const content = 'Hello world!';
-  const blobName = 'newblob' + new Date().getTime();
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   const uploadBlobResponse = await blockBlobClient.upload(
     content,
@@ -28,15 +22,16 @@ async function main() {
   );
 }
 
-// main();
-
-async function downloadBlobToFile(blobName, fileNameWithPath) {
+export async function downloadBlobToFile(blobName, fileNameWithPath) {
   const containerClient = blobServiceClient.getContainerClient(containerName);
-  // Create blob client from container client
   const blobClient = containerClient.getBlobClient(blobName);
-
   await blobClient.downloadToFile(fileNameWithPath);
   console.log(`download of ${blobName} success`);
 }
 
-(async () => downloadBlobToFile('my-file', './downloads/my-file.txt'))();
+export async function deleteBlob(blobName) {
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+  const blobClient = containerClient.getBlobClient(blobName);
+  await blobClient.delete();
+  console.log(`Deletion of ${blobName} successful`);
+}
