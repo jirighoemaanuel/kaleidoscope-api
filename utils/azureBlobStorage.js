@@ -30,6 +30,9 @@ export async function downloadBlobToFile(blobName, fileNameWithPath) {
 }
 
 export async function deleteBlob(blobName) {
+  if (!blobName) {
+    throw new Error('Blob name is undefined');
+  }
   const containerClient = blobServiceClient.getContainerClient(containerName);
   const blobClient = containerClient.getBlobClient(blobName);
   await blobClient.delete();

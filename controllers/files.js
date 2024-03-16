@@ -13,23 +13,28 @@ export const getFile = async (req, res) => {
   const filePath = `public/downloads/${fileId}`;
   const resolvedPath = path.resolve(filePath);
 
-  // Download the file from Azure Blob Storage
-  await downloadBlobToFile(fileId, resolvedPath);
+  try {
+    // Download the file from Azure Blob Storage
+    await downloadBlobToFile(fileId, resolvedPath);
 
-  const mimeType = mime.lookup(resolvedPath);
-  res.setHeader('Content-Type', mimeType);
+    const mimeType = mime.lookup(resolvedPath);
+    res.setHeader('Content-Type', mimeType);
 
-  res.sendFile(resolvedPath, (err) => {
-    if (err) {
-      console.error(`Error sending file: ${err}`);
-      res.status(500).send('Error sending file');
-    } else {
-      // Delete the file after sending it
-      fs.unlink(resolvedPath, (err) => {
-        if (err) console.error(`Error deleting file: ${err}`);
-      });
-    }
-  });
+    res.sendFile(resolvedPath, (err) => {
+      if (err) {
+        console.error(`Error sending file: ${err}`);
+        res.status(500).send('Error sending file');
+      } else {
+        // Delete the file after sending it
+        fs.unlink(resolvedPath, (err) => {
+          if (err) console.error(`Error deleting file: ${err}`);
+        });
+      }
+    });
+  } catch (err) {
+    console.error(`Error getting file: ${err}`);
+    res.status(500).send('Error getting file');
+  }
 };
 
 export const uploadFile = async (req, res) => {
@@ -51,8 +56,6 @@ export const uploadFile = async (req, res) => {
     console.error(`Error uploading file: ${err}`);
     res.status(500).json('Error uploading file');
   }
-
-  res.json({ msg: fileId });
 };
 
 export const deleteFile = async (req, res) => {
