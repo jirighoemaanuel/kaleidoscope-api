@@ -1,8 +1,5 @@
 {
   "version": 2,
   "builds": [{ "src": "src/app.js", "use": "@now/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "src/app.js" }],
-  "env": {
-    "CONNECTIONSTRING": "@connectionstring"
-  }
+  "routes": [{ "src": "/(.*)", "dest": "src/app.js" }]
 }
