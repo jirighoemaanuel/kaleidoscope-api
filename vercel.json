@@ -1,16 +1,8 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "app.js",
-      "use": "@vercel/node",
-      "config": { "includeFiles": ["dist/**"] }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "app.js"
-    }
-  ]
+  "builds": [{ "src": "src/app.js", "use": "@now/node" }],
+  "routes": [{ "src": "/(.*)", "dest": "src/app.js" }],
+  "env": {
+    "CONNECTIONSTRING": "@connectionstring"
+  }
 }
