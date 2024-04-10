@@ -1,5 +1,5 @@
 import User from '../models/User.js';
-import { StatusCodes } from 'http-status-codes.js';
+import { StatusCodes } from 'http-status-codes';
 import { BadRequestError } from '../errors/index.js';
 
 export const register = async (req, res) => {
