@@ -13,6 +13,7 @@ export const getFile = async (req, res) => {
   const filePath = `public/downloads/${fileId}`;
   const resolvedPath = path.resolve(filePath);
 
+  console.log(resolvedPath);
   // Download the file from Azure Blob Storage
   await downloadBlobToFile(fileId, resolvedPath);
 
