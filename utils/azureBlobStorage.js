@@ -23,6 +23,8 @@ export async function createUserContainer(userId) {
   }
 }
 
+`After you have sucessfully created a container for a user, Find a way to make each route call to these functions below call to the container of a specific user. Save the container assigned to the the user to the mongodb and call on it before making any request to these functions below`;
+
 // upload to user container
 export async function uploadToBlob(content, blobName) {
   const containerClient = blobServiceClient.getContainerClient(containerName);
@@ -45,7 +47,7 @@ export async function downloadBlobToFile(blobName, fileNameWithPath) {
   console.log(`download of ${blobName} success`);
 }
 
-// deleter from container
+// deleter from
 export async function deleteBlob(blobName) {
   if (!blobName) {
     throw new Error('Blob name is undefined');
