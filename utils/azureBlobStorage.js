@@ -9,6 +9,21 @@ const blobServiceClient =
   BlobServiceClient.fromConnectionString(connectionString);
 const containerName = 'my-container';
 
+// Create a container for a user after they register
+export async function createUserContainer(userId) {
+  const containerName = `user-${userId}`;
+  const containerClient = blobServiceClient.getContainerClient(containerName);
+
+  // Create the container if it doesn't exist
+  const createContainerResponse = await containerClient.createIfNotExists();
+  if (createContainerResponse.succeeded) {
+    console.log(`Created container ${containerName} successfully`);
+  } else {
+    console.log(`Container ${containerName} already exists`);
+  }
+}
+
+// upload to user container
 export async function uploadToBlob(content, blobName) {
   const containerClient = blobServiceClient.getContainerClient(containerName);
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -22,6 +37,7 @@ export async function uploadToBlob(content, blobName) {
   );
 }
 
+// Download from container
 export async function downloadBlobToFile(blobName, fileNameWithPath) {
   const containerClient = blobServiceClient.getContainerClient(containerName);
   const blobClient = containerClient.getBlobClient(blobName);
@@ -29,6 +45,7 @@ export async function downloadBlobToFile(blobName, fileNameWithPath) {
   console.log(`download of ${blobName} success`);
 }
 
+// deleter from container
 export async function deleteBlob(blobName) {
   if (!blobName) {
     throw new Error('Blob name is undefined');
