@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
+import { createUserContainer } from '../utils/azureBlobStorage.js';
+
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -25,11 +27,14 @@ const UserSchema = new mongoose.Schema({
     required: [true, '{Please provide name'],
     minlength: 6,
   },
+  containerName: String,
 });
 
 UserSchema.pre('save', async function () {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
+  this.containerName = this._id;
+  await createUserContainer(this.containerName);
 });
 
 UserSchema.methods.createJWT = function () {
