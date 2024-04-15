@@ -11,7 +11,7 @@ const blobServiceClient =
 
 // Create a container for a user after they register
 export async function createUserContainer(userId) {
-  const containerName = `user-${userId}`;
+  const containerName = userId;
   const containerClient = blobServiceClient.getContainerClient(containerName);
 
   // Create the container if it doesn't exist
