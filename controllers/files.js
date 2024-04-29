@@ -44,22 +44,24 @@ export const uploadFile = async (req, res) => {
   const fileId = req.file.filename;
   const filePath = `public/uploads/${fileId}`;
   const resolvedPath = path.resolve(filePath);
-
+  
   // Add file information to the request body
   req.body.filename = req.file.originalname; // The original name of the file
   req.body.size = req.file.size; // The size of the file in bytes
   req.body.mimeType = req.file.mimetype; // The MIME type of the file
-
-  const file = await File.create(req.body);
-
+  
+  // const file = await File.create(req.body);
+  
   // Ensure the uploads directory exists
   fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
-
+  
   // Read the file content
   const content = fs.readFileSync(resolvedPath);
-
+  
   // Upload the file to Azure Blob Storage
-  await uploadToBlob(content, fileId, req.user.userId);
+  
+  console.log(`user-${req.user.userId}`);
+  await uploadToBlob(content, fileId, `user-${req.user.userId}`);
   res.json({ msg: `File ${fileId} uploaded successfully` });
 };
 

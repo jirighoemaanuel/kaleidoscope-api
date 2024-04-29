@@ -14,6 +14,7 @@ const auth = (req, res, next) => {
     // Attach the user to the file routes
 
     req.user = { userId: payload.userId, name: payload.name };
+    next();
   } catch (error) {
     throw new UnauthenticatedError('Authentication Invalid');
   }

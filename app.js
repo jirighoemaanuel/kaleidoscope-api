@@ -11,6 +11,7 @@ const port = process.env.PORT || 3000;
 import files from './routes/files.js';
 import auth from './routes/auth.js';
 
+import authenticateUser from './middleware/authentication.js';
 // error handler
 import notFoundMiddleware from './middleware/not-found.js';
 import errorHandlerMiddleware from './middleware/error-handler.js';
@@ -21,7 +22,7 @@ app.use(express.json());
 
 // routes
 app.use('/api/v1/auth', auth);
-app.use('/api/v1/files', files);
+app.use('/api/v1/files', authenticateUser, files);
 
 // app.get('/', (req, res) => {
 //   res.json({
