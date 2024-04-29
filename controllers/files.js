@@ -1,13 +1,13 @@
 import path from 'path';
 import mime from 'mime-types';
 import fs from 'fs';
+import File from '../models/Files.js';
 
 import {
   uploadToBlob,
   downloadBlobToFile,
   deleteBlob,
 } from '../utils/azureBlobStorage.js';
-
 
 export const getFile = async (req, res) => {
   const fileId = req.params.fileId;
@@ -42,6 +42,7 @@ export const uploadFile = async (req, res) => {
   const filePath = `public/uploads/${fileId}`;
   const resolvedPath = path.resolve(filePath);
 
+  const File = File.create()
   // Ensure the uploads directory exists
   fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
 
