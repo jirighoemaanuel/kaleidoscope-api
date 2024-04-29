@@ -2,6 +2,8 @@ import path from 'path';
 import mime from 'mime-types';
 import fs from 'fs';
 import File from '../models/Files.js';
+import { BadRequestError, NotFoundError } from '../errors/index.js';
+import { StatusCodes } from 'http-status-codes';
 
 import {
   uploadToBlob,
@@ -38,11 +40,14 @@ export const getFile = async (req, res) => {
 };
 
 export const uploadFile = async (req, res) => {
+  req.body.createdBy = req.user.userId; // Add createdBy to the request body
   const fileId = req.file.filename;
   const filePath = `public/uploads/${fileId}`;
   const resolvedPath = path.resolve(filePath);
+  const file = await File.create(req.body);
+ 
 
-  const File = File.create()
+
   // Ensure the uploads directory exists
   fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
 
