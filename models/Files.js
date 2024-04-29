@@ -13,6 +13,12 @@ const FileSchema = new mongoose.Schema(
       required: [true, 'please provide a file size'],
     },
     mimeType: String,
+
+    createdBy: {
+      type: mongoose.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Please provide user'],
+    },
   },
   { timestamps: true }
 );
