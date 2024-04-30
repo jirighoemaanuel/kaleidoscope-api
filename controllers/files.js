@@ -42,11 +42,11 @@ export const getFile = async (req, res) => {
 export const uploadFile = async (req, res) => {
   req.body.createdBy = req.user.userId; // Add createdBy to the request body
 
-  const fileId = req.params.fileId;
+  const fileId = req.file.filename;
+
   const filePath = `public/uploads/${fileId}`;
   const resolvedPath = path.resolve(filePath);
 
- 
   // Ensure the uploads directory exists
   fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
 
@@ -55,7 +55,6 @@ export const uploadFile = async (req, res) => {
 
   // Upload the file to Azure Blob Storage
 
-  console.log(`user-${req.user.userId}`);
   await uploadToBlob(content, fileId, `user-${req.user.userId}`);
   res.json({ msg: `File ${fileId} uploaded successfully` });
 };

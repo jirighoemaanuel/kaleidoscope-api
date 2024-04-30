@@ -22,6 +22,7 @@ app.use(express.json());
 
 // routes
 app.use('/api/v1/auth', auth);
+// app.use('/api/v1/files', files);
 app.use('/api/v1/files', authenticateUser, files);
 
 // app.get('/', (req, res) => {
