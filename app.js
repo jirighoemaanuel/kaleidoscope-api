@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import 'express-async-errors';
 import connectDB from './db/connect.js';
 import dotenv from 'dotenv';
@@ -17,6 +18,7 @@ import notFoundMiddleware from './middleware/not-found.js';
 import errorHandlerMiddleware from './middleware/error-handler.js';
 
 // Middleware
+app.use(cors());
 app.use(express.static('public'));
 app.use(express.json());
 

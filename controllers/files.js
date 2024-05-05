@@ -49,7 +49,7 @@ export const uploadFile = async (req, res) => {
   req.body.filename = req.file.originalname;
   req.body.size = req.file.size;
   req.body.mimeType = req.file.mimetype;
-
+da
   const file = await File.create(req.body);
 
   // Ensure the uploads directory exists
