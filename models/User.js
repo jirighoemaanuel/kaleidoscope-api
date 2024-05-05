@@ -27,14 +27,14 @@ const UserSchema = new mongoose.Schema({
     required: [true, '{Please provide password'],
     minlength: 6,
   },
-  containerName: String,
+  // containerName: String,
 });
 
 UserSchema.pre('save', async function () {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  this.containerName = `user-${this._id}`;
-  await createUserContainer(this.containerName);
+  // this.containerName = `user-${this._id}`;
+  // await createUserContainer(this.containerName);
 });
 
 UserSchema.methods.createJWT = function () {
