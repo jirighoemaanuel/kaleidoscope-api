@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaleidoscope File Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .auth-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .files-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .file-input {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .file-input input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            text-align: center;
+            color: #718096;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .file-input:hover .file-input-label {
+            border-color: #667eea;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 101, 101, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #2f855a;
+            border: 1px solid #9ae6b4;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+
+        .status.info {
+            background: #bee3f8;
+            color: #2b6cb0;
+            border: 1px solid #90cdf4;
+        }
+
+        .user-info {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .files-grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .file-item {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .file-meta {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+        }
+
+        .loading:not(.hidden) {
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-forms {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .auth-forms {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 10px;
+            }
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #cbd5e0;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #718096;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Kaleidoscope</h1>
+            <p>Modern File Management with Cloudinary Integration</p>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="auth-section" id="authSection">
+            <h2 class="section-title">Authentication</h2>
+            <div id="statusMessage"></div>
+            
+            <div class="auth-forms" id="authForms">
+                <!-- Register Form -->
+                <div>
+                    <h3>Register</h3>
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="regName">Full Name</label>
+                            <input type="text" id="regName" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regEmail">Email</label>
+                            <input type="email" id="regEmail" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regPassword">Password</label>
+                            <input type="password" id="regPassword" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-text">Register</span>
+                            <span class="loading hidden"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Login Form -->
+                <div>
+                    <h3>Login</h3>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="btn-text">Login</span>
+                            <span class="loading hidden"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- User Info (shown when logged in) -->
+            <div class="user-info hidden" id="userInfo">
+                <h3>Welcome, <span id="userName"></span>!</h3>
+                <p>You are successfully logged in.</p>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </div>
+
+        <!-- File Management Section -->
+        <div class="files-section hidden" id="filesSection">
+            <h2 class="section-title">File Management</h2>
+            <div id="fileStatusMessage"></div>
+
+            <!-- Upload Area -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">
+                    <p><strong>Drop files here or click to upload</strong></p>
+                    <p>Support for all file types</p>
+                </div>
+                <input type="file" id="fileInput" multiple style="display: none;">
+            </div>
+
+            <button id="uploadBtn" class="btn btn-primary" disabled>
+                <span class="btn-text">Upload Selected Files</span>
+                <span class="loading hidden"></span>
+            </button>
+
+            <!-- Files List -->
+            <div class="files-grid" id="filesGrid">
+                <!-- Files will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api/v1';
+        let authToken = '';
+        let currentUser = null;
+        let selectedFiles = [];
+
+        // DOM Elements
+        const authSection = document.getElementById('authSection');
+        const filesSection = document.getElementById('filesSection');
+        const authForms = document.getElementById('authForms');
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+        const statusMessage = document.getElementById('statusMessage');
+        const fileStatusMessage = document.getElementById('fileStatusMessage');
+        const registerForm = document.getElementById('registerForm');
+        const loginForm = document.getElementById('loginForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const filesGrid = document.getElementById('filesGrid');
+
+        // Utility Functions
+        function showStatus(element, message, type = 'info') {
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showLoading(button, show) {
+            const btnText = button.querySelector('.btn-text');
+            const loading = button.querySelector('.loading');
+            
+            if (show) {
+                btnText.style.display = 'none';
+                loading.classList.remove('hidden');
+                button.disabled = true;
+            } else {
+                btnText.style.display = 'inline';
+                loading.classList.add('hidden');
+                button.disabled = false;
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+
+        // API Functions
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const defaultHeaders = {
+                'Content-Type': 'application/json',
+                ...(authToken && { Authorization: `Bearer ${authToken}` }),
+            };
+
+            const requestOptions = {
+                ...options,
+                headers: {
+                    ...defaultHeaders,
+                    ...options.headers,
+                },
+            };
+
+            try {
+                const response = await fetch(url, requestOptions);
+                
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    const data = await response.json();
+                    return { response, data };
+                } else {
+                    const text = await response.text();
+                    return { response, data: { message: text } };
+                }
+            } catch (error) {
+                return { error: error.message };
+            }
+        }
+
+        // Authentication Functions
+        async function register(name, email, password) {
+            const { response, data, error } = await apiRequest('/auth/register', {
+                method: 'POST',
+                body: JSON.stringify({ name, email, password }),
+            });
+
+            if (error) {
+                throw new Error(`Network error: ${error}`);
+            }
+
+            if (response.status === 201) {
+                authToken = data.token;
+                currentUser = data.user;
+                return data;
+            } else {
+                throw new Error(data.msg || 'Registration failed');
+            }
+        }
+
+        async function login(email, password) {
+            const { response, data, error } = await apiRequest('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (error) {
+                throw new Error(`Network error: ${error}`);
+            }
+
+            if (response.status === 200) {
+                authToken = data.token;
+                currentUser = data.user;
+                return data;
+            } else {
+                throw new Error(data.msg || 'Login failed');
+            }
+        }
+
+        function logout() {
+            authToken = '';
+            currentUser = null;
+            selectedFiles = [];
+            
+            // Show auth forms, hide files section
+            authForms.classList.remove('hidden');
+            userInfo.classList.add('hidden');
+            filesSection.classList.add('hidden');
+            
+            // Clear forms
+            registerForm.reset();
+            loginForm.reset();
+            
+            // Clear status messages
+            statusMessage.innerHTML = '';
+            fileStatusMessage.innerHTML = '';
+            
+            showStatus(statusMessage, 'Logged out successfully', 'info');
+        }
+
+        function showLoggedInState() {
+            authForms.classList.add('hidden');
+            userInfo.classList.remove('hidden');
+            filesSection.classList.remove('hidden');
+            userName.textContent = currentUser.name;
+            showStatus(statusMessage, `Welcome back, ${currentUser.name}!`, 'success');
+        }
+
+        // File Functions
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_BASE_URL}/files/upload`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                return data;
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.msg || 'Upload failed');
+            }
+        }
+
+        async function downloadFile(fileId, fileName) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
+                    headers: {
+                        Authorization: `Bearer ${authToken}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showStatus(fileStatusMessage, `File "${fileName}" downloaded successfully!`, 'success');
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.msg || 'Download failed');
+                }
+            } catch (error) {
+                showStatus(fileStatusMessage, `Download failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteFile(fileId, fileName) {
+            try {
+                const { response, data } = await apiRequest(`/files/${fileId}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.status === 200) {
+                    showStatus(fileStatusMessage, `File "${fileName}" deleted successfully!`, 'success');
+                    // Remove the file from the grid
+                    const fileElement = document.querySelector(`[data-file-id="${fileId}"]`);
+                    if (fileElement) {
+                        fileElement.remove();
+                    }
+                } else {
+                    throw new Error(data.msg || 'Delete failed');
+                }
+            } catch (error) {
+                showStatus(fileStatusMessage, `Delete failed: ${error.message}`, 'error');
+            }
+        }
+
+        function renderFiles() {
+            // For demo purposes, we'll show uploaded files in a simple way
+            // In a real app, you'd fetch the user's files from an API endpoint
+            filesGrid.innerHTML = '<p>Files will appear here after upload. This demo shows upload/download/delete functionality.</p>';
+        }
+
+        function addFileToGrid(fileData) {
+            const fileElement = document.createElement('div');
+            fileElement.className = 'file-item';
+            fileElement.setAttribute('data-file-id', fileData.file._id);
+            
+            fileElement.innerHTML = `
+                <div class="file-name">${fileData.file.originalName || fileData.file.filename}</div>
+                <div class="file-meta">
+                    Size: ${formatFileSize(fileData.file.size)} | 
+                    Type: ${fileData.file.mimeType} | 
+                    Uploaded: ${formatDate(fileData.file.createdAt)}
+                </div>
+                <div class="file-actions">
+                    <button class="btn btn-secondary" onclick="downloadFile('${fileData.file._id}', '${fileData.file.originalName || fileData.file.filename}')">
+                        📥 Download
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteFile('${fileData.file._id}', '${fileData.file.originalName || fileData.file.filename}')">
+                        🗑️ Delete
+                    </button>
+                </div>
+            `;
+            
+            filesGrid.appendChild(fileElement);
+        }
+
+        // Event Listeners
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            showLoading(submitBtn, true);
+            
+            try {
+                const name = document.getElementById('regName').value;
+                const email = document.getElementById('regEmail').value;
+                const password = document.getElementById('regPassword').value;
+                
+                await register(name, email, password);
+                showLoggedInState();
+            } catch (error) {
+                showStatus(statusMessage, error.message, 'error');
+            } finally {
+                showLoading(submitBtn, false);
+            }
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            showLoading(submitBtn, true);
+            
+            try {
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                await login(email, password);
+                showLoggedInState();
+            } catch (error) {
+                showStatus(statusMessage, error.message, 'error');
+            } finally {
+                showLoading(submitBtn, false);
+            }
+        });
+
+        logoutBtn.addEventListener('click', logout);
+
+        // Upload Area Event Listeners
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files);
+            selectedFiles = files;
+            updateUploadButton();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            selectedFiles = Array.from(e.target.files);
+            updateUploadButton();
+        });
+
+        function updateUploadButton() {
+            if (selectedFiles.length > 0) {
+                uploadBtn.disabled = false;
+                uploadBtn.querySelector('.btn-text').textContent = `Upload ${selectedFiles.length} file(s)`;
+            } else {
+                uploadBtn.disabled = true;
+                uploadBtn.querySelector('.btn-text').textContent = 'Upload Selected Files';
+            }
+        }
+
+        uploadBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+            
+            showLoading(uploadBtn, true);
+            
+            try {
+                for (const file of selectedFiles) {
+                    showStatus(fileStatusMessage, `Uploading ${file.name}...`, 'info');
+                    const result = await uploadFile(file);
+                    addFileToGrid(result);
+                }
+                
+                showStatus(fileStatusMessage, `Successfully uploaded ${selectedFiles.length} file(s)!`, 'success');
+                selectedFiles = [];
+                fileInput.value = '';
+                updateUploadButton();
+            } catch (error) {
+                showStatus(fileStatusMessage, `Upload failed: ${error.message}`, 'error');
+            } finally {
+                showLoading(uploadBtn, false);
+            }
+        });
+
+        // Initialize
+        renderFiles();
+    </script>
+</body>
+</html>

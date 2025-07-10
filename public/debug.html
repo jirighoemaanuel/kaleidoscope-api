@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend API Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Frontend API Debug Tool</h1>
+    
+    <div class="section">
+        <h2>1. Basic Connectivity Test</h2>
+        <button onclick="testConnectivity()">Test Server Connection</button>
+        <div id="connectivityResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>2. Registration Test</h2>
+        <input type="text" id="regName" placeholder="Name" value="Debug User">
+        <input type="email" id="regEmail" placeholder="Email" value="debug@example.com">
+        <input type="password" id="regPassword" placeholder="Password" value="password123">
+        <button onclick="testRegistration()">Test Registration</button>
+        <div id="registrationResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>3. Login Test</h2>
+        <input type="email" id="loginEmail" placeholder="Email" value="debug@example.com">
+        <input type="password" id="loginPassword" placeholder="Password" value="password123">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="loginResult" class="result"></div>
+    </div>
+    
+    <div class="section">
+        <h2>4. Request Details</h2>
+        <button onclick="showRequestDetails()">Show Last Request Details</button>
+        <div id="requestDetails" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api/v1';
+        let lastRequest = null;
+        let lastResponse = null;
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.innerHTML = message;
+        }
+
+        async function makeRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            
+            lastRequest = {
+                url,
+                method: options.method || 'GET',
+                headers: options.headers || {},
+                body: options.body || null
+            };
+
+            console.log('Making request:', lastRequest);
+
+            try {
+                const response = await fetch(url, options);
+                lastResponse = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
+                };
+
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+
+                lastResponse.data = data;
+                console.log('Response:', lastResponse);
+
+                return { response, data };
+            } catch (error) {
+                lastResponse = { error: error.message };
+                console.error('Request error:', error);
+                throw error;
+            }
+        }
+
+        async function testConnectivity() {
+            try {
+                showResult('connectivityResult', 'Testing connection...', 'info');
+                const { response } = await makeRequest('/auth/test');
+                
+                if (response.status === 404) {
+                    showResult('connectivityResult', '✅ Server is reachable (404 is expected for /test endpoint)', 'success');
+                } else {
+                    showResult('connectivityResult', `✅ Server responded with status: ${response.status}`, 'success');
+                }
+            } catch (error) {
+                showResult('connectivityResult', `❌ Connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testRegistration() {
+            try {
+                showResult('registrationResult', 'Testing registration...', 'info');
+                
+                const name = document.getElementById('regName').value;
+                const email = document.getElementById('regEmail').value;
+                const password = document.getElementById('regPassword').value;
+
+                const { response, data } = await makeRequest('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                if (response.status === 201) {
+                    showResult('registrationResult', `✅ Registration successful! Token: ${data.token?.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult('registrationResult', `❌ Registration failed: ${data.msg || data}`, 'error');
+                }
+            } catch (error) {
+                showResult('registrationResult', `❌ Registration error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            try {
+                showResult('loginResult', 'Testing login...', 'info');
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                const { response, data } = await makeRequest('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.status === 200) {
+                    showResult('loginResult', `✅ Login successful! Token: ${data.token?.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult('loginResult', `❌ Login failed: ${data.msg || data}`, 'error');
+                }
+            } catch (error) {
+                showResult('loginResult', `❌ Login error: ${error.message}`, 'error');
+            }
+        }
+
+        function showRequestDetails() {
+            if (lastRequest && lastResponse) {
+                const details = `
+                    <h4>Last Request:</h4>
+                    <pre>${JSON.stringify(lastRequest, null, 2)}</pre>
+                    <h4>Last Response:</h4>
+                    <pre>${JSON.stringify(lastResponse, null, 2)}</pre>
+                `;
+                showResult('requestDetails', details, 'info');
+            } else {
+                showResult('requestDetails', 'No request details available yet', 'info');
+            }
+        }
+
+        // Auto-test connectivity on load
+        window.addEventListener('load', testConnectivity);
+    </script>
+</body>
+</html>
