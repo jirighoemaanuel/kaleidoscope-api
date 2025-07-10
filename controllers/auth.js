@@ -1,10 +1,19 @@
 import User from '../models/User.js';
 import { StatusCodes } from 'http-status-codes';
 import { BadRequestError, UnauthenticatedError } from '../errors/index.js';
+import { createUserContainer } from '../utils/cloudinaryStorage.js';
 
 export const register = async (req, res) => {
   const user = await User.create({ ...req.body });
   const token = user.createJWT();
+
+  // Create user container/folder in Cloudinary
+  try {
+    await createUserContainer(`user-${user._id}`);
+  } catch (error) {
+    console.error('Error creating user container:', error);
+    // Don't fail registration if container creation fails
+  }
 
   res.status(StatusCodes.CREATED).json({ user: { name: user.name }, token });
 };

@@ -9,14 +9,14 @@ import {
   uploadToBlob,
   downloadBlobToFile,
   deleteBlob,
-} from '../utils/azureBlobStorage.js';
+} from '../utils/cloudinaryStorage.js';
 
 export const getFile = async (req, res) => {
   const fileId = req.params.fileId;
   const filePath = `public/downloads/${fileId}`;
   const resolvedPath = path.resolve(filePath);
 
-  // Download the file from Azure Blob Storage
+  // Download the file from Cloudinary
   await downloadBlobToFile(fileId, resolvedPath, `user-${req.user.userId}`);
 
   const mimeType = mime.lookup(resolvedPath);
@@ -49,7 +49,7 @@ export const uploadFile = async (req, res) => {
   req.body.filename = req.file.originalname;
   req.body.size = req.file.size;
   req.body.mimeType = req.file.mimetype;
-da
+
   const file = await File.create(req.body);
 
   // Ensure the uploads directory exists
@@ -58,7 +58,7 @@ da
   // Read the file content
   const content = fs.readFileSync(resolvedPath);
 
-  // Upload the file to Azure Blob Storage
+  // Upload the file to Cloudinary
   await uploadToBlob(content, fileId, `user-${req.user.userId}`);
   res
     .status(StatusCodes.CREATED)
@@ -68,6 +68,6 @@ da
 export const deleteFile = async (req, res) => {
   const fileId = req.params.fileId;
 
-  await deleteBlob(fileId);
+  await deleteBlob(fileId, `user-${req.user.userId}`);
   res.json({ msg: `File ${fileId} deleted successfully` });
 };

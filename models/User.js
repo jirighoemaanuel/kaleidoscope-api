@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { createUserContainer } from '../utils/azureBlobStorage.js';
+import { createUserContainer } from '../utils/cloudinaryStorage.js';
 
 const UserSchema = new mongoose.Schema({
   name: {
