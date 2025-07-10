@@ -11,6 +11,40 @@ import {
   deleteBlob,
 } from '../utils/cloudinaryStorage.js';
 
+export const getAllFiles = async (req, res) => {
+  console.log(`📂 Getting all files for user: ${req.user.userId}`);
+
+  try {
+    const files = await File.find({
+      createdBy: req.user.userId,
+    }).sort({ createdAt: -1 }); // Sort by newest first
+
+    console.log(`📋 Found ${files.length} files for user`);
+
+    // Transform the files to include display names and useful metadata
+    const transformedFiles = files.map((file) => ({
+      _id: file._id,
+      filename: file.filename,
+      originalName: file.originalName,
+      displayName: file.originalName || file.filename,
+      size: file.size,
+      mimeType: file.mimeType,
+      createdAt: file.createdAt,
+      updatedAt: file.updatedAt,
+    }));
+
+    res.status(StatusCodes.OK).json({
+      files: transformedFiles,
+      count: transformedFiles.length,
+    });
+  } catch (error) {
+    console.error('❌ Error fetching files:', error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: 'Error fetching files',
+    });
+  }
+};
+
 export const getFile = async (req, res) => {
   const fileId = req.params.fileId;
 

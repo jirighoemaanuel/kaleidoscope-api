@@ -14,11 +14,18 @@ const storage = multer.diskStorage({
   },
 });
 
-import { getFile, uploadFile, deleteFile } from '../controllers/files.js';
+import {
+  getFile,
+  getAllFiles,
+  uploadFile,
+  deleteFile,
+} from '../controllers/files.js';
 
 const upload = multer({ storage: storage });
 
 const router = express.Router();
+
+router.route('/').get(getAllFiles);
 
 router.route('/:fileId').get(getFile);
 
