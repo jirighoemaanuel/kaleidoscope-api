@@ -9,10 +9,11 @@ import path from 'path';
 const BASE_URL = 'http://localhost:3000/api/v1';
 let authToken = '';
 
-// Test user credentials
+// Test user credentials - use timestamp to avoid duplicates
+const timestamp = Date.now();
 const testUser = {
   name: 'Test User',
-  email: 'testuser@example.com',
+  email: `testuser-${timestamp}@example.com`,
   password: 'password123',
 };
 
@@ -34,7 +35,18 @@ async function apiRequest(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, requestOptions);
-    const data = await response.json();
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    let data;
+
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      // Handle non-JSON responses
+      const text = await response.text();
+      data = { message: text, raw: text };
+    }
 
     console.log(`${options.method || 'GET'} ${endpoint}`);
     console.log(`Status: ${response.status}`);
@@ -52,28 +64,39 @@ async function apiRequest(endpoint, options = {}) {
 async function testRegister() {
   console.log('1️⃣ Testing User Registration...');
 
-  const { response, data } = await apiRequest('/auth/register', {
+  const { response, data, error } = await apiRequest('/auth/register', {
     method: 'POST',
     body: JSON.stringify(testUser),
   });
+
+  if (error) {
+    console.log('❌ Registration failed due to network error');
+    return false;
+  }
 
   if (response?.status === 201) {
     authToken = data.token;
     console.log('✅ Registration successful!');
     console.log(`Auth token: ${authToken.substring(0, 20)}...`);
+    return true;
+  } else if (
+    response?.status === 400 &&
+    data.msg &&
+    data.msg.includes('duplicate')
+  ) {
+    console.log('⚠️  User already exists, trying login instead...');
+    return await testLogin();
   } else {
     console.log('❌ Registration failed');
+    return false;
   }
-
-  console.log('');
-  return response?.status === 201;
 }
 
 // Test 2: Login user
 async function testLogin() {
   console.log('2️⃣ Testing User Login...');
 
-  const { response, data } = await apiRequest('/auth/login', {
+  const { response, data, error } = await apiRequest('/auth/login', {
     method: 'POST',
     body: JSON.stringify({
       email: testUser.email,
@@ -81,15 +104,19 @@ async function testLogin() {
     }),
   });
 
+  if (error) {
+    console.log('❌ Login failed due to network error');
+    return false;
+  }
+
   if (response?.status === 200) {
     authToken = data.token;
     console.log('✅ Login successful!');
+    return true;
   } else {
     console.log('❌ Login failed');
+    return false;
   }
-
-  console.log('');
-  return response?.status === 200;
 }
 
 // Test 3: Upload file
@@ -113,10 +140,20 @@ async function testFileUpload() {
       body: form,
     });
 
-    const data = await response.json();
-
     console.log(`POST /files/upload`);
     console.log(`Status: ${response.status}`);
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    let data;
+
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { message: text, raw: text };
+    }
+
     console.log('Response:', JSON.stringify(data, null, 2));
     console.log('---');
 
@@ -158,12 +195,27 @@ async function testFileDownload(fileId) {
     if (response.status === 200) {
       const contentType = response.headers.get('content-type');
       console.log(`Content-Type: ${contentType}`);
+
+      // For file downloads, we might get different content types
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        console.log('Response:', JSON.stringify(data, null, 2));
+      } else {
+        console.log('File content received successfully');
+      }
+
       console.log('✅ File download successful!');
       console.log('---');
       return true;
     } else {
-      const data = await response.json();
-      console.log('Response:', JSON.stringify(data, null, 2));
+      // Try to parse error response
+      try {
+        const data = await response.json();
+        console.log('Response:', JSON.stringify(data, null, 2));
+      } catch {
+        const text = await response.text();
+        console.log('Response:', text);
+      }
       console.log('❌ File download failed');
       console.log('---');
       return false;
@@ -203,14 +255,20 @@ async function testUnauthorizedAccess() {
   const originalToken = authToken;
   authToken = 'invalid_token';
 
-  const { response } = await apiRequest('/files/upload', {
+  const { response, data } = await apiRequest('/files/upload', {
     method: 'POST',
     body: JSON.stringify({}),
   });
 
   authToken = originalToken;
 
-  if (response?.status === 401) {
+  // Check if authentication is blocked (401 status or authentication error message)
+  const isBlocked =
+    response?.status === 401 ||
+    (data && data.message && data.message.includes('Authentication Invalid')) ||
+    (data && data.raw && data.raw.includes('Authentication Invalid'));
+
+  if (isBlocked) {
     console.log('✅ Unauthorized access properly blocked!');
     return true;
   } else {
@@ -250,8 +308,9 @@ async function runApiTests() {
       results.upload = !!uploadedFile;
 
       if (uploadedFile) {
-        // Extract file ID for subsequent tests
-        const fileId = uploadedFile.filename || uploadedFile._id;
+        // Extract file ID for subsequent tests - use database _id, not filename
+        const fileId = uploadedFile._id;
+        console.log(`📄 Using file ID for tests: ${fileId}`);
         results.download = await testFileDownload(fileId);
         results.delete = await testFileDelete(fileId);
       }

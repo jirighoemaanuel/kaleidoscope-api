@@ -30,6 +30,7 @@
     "node-fetch": "^3.3.2",
     "rate-limiter": "^0.2.0",
     "swagger-ui-express": "^5.0.0",
+    "uuid": "^11.1.0",
     "xss-clean": "^0.1.4",
     "yamljs": "^0.3.0"
   },

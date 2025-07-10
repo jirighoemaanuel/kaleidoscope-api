@@ -7,7 +7,10 @@ const FileSchema = new mongoose.Schema(
       required: [true, 'please provide a file name'],
       maxLength: 100,
     },
-
+    originalName: {
+      type: String,
+      maxLength: 100,
+    },
     size: {
       type: Number,
       required: [true, 'please provide a file size'],
