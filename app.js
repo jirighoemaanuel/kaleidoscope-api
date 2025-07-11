@@ -19,17 +19,19 @@ import errorHandlerMiddleware from './middleware/error-handler.js';
 
 // Middleware
 app.use(cors());
-app.use(express.static('public'));
 app.use(express.json());
+
+// Serve the frontend - root route handler comes first
+app.get('/', (req, res) => {
+  res.sendFile('landing.html', { root: 'public' });
+});
+
+// Static files middleware (but exclude index.html from being served automatically)
+app.use(express.static('public', { index: false }));
 
 // routes
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/files', authenticateUser, files);
-
-// Serve the frontend
-app.get('/', (req, res) => {
-  res.sendFile('landing.html', { root: 'public' });
-});
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
