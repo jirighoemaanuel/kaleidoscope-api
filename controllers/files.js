@@ -1,6 +1,7 @@
 import path from 'path';
 import mime from 'mime-types';
 import fs from 'fs';
+import { v4 as uuidv4 } from 'uuid';
 import File from '../models/Files.js';
 import { BadRequestError, NotFoundError } from '../errors/index.js';
 import { StatusCodes } from 'http-status-codes';
@@ -113,10 +114,9 @@ export const getFile = async (req, res) => {
 export const uploadFile = async (req, res) => {
   req.body.createdBy = req.user.userId;
 
-  const fileId = req.file.filename; // Generated filename by multer
+  // Generate unique filename with original extension
+  const fileId = `${uuidv4()}${path.extname(req.file.originalname)}`;
   const originalFilename = req.file.originalname;
-  const filePath = `public/uploads/${fileId}`;
-  const resolvedPath = path.resolve(filePath);
 
   console.log(`📤 Upload details:`);
   console.log(`  - Generated filename (fileId): ${fileId}`);
@@ -134,20 +134,14 @@ export const uploadFile = async (req, res) => {
   const file = await File.create(req.body);
   console.log(`📊 Database record created:`, file);
 
-  // Ensure the uploads directory exists
-  fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
-
-  // Read the file content
-  const content = fs.readFileSync(resolvedPath);
-
   try {
     console.log(
       `☁️ Uploading to Cloudinary: ${fileId} in folder user-${req.user.userId}`
     );
 
-    // Upload the file to Cloudinary using the generated filename
+    // Upload the file to Cloudinary using the memory buffer directly
     const cloudinaryResult = await uploadToBlob(
-      content,
+      req.file.buffer, // Use memory buffer instead of reading from disk
       fileId,
       `user-${req.user.userId}`
     );
