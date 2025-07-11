@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Kaleidoscope</title>
+    <link rel="stylesheet" href="styles/app.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-title">
+        <h1>📝 Join Kaleidoscope</h1>
+        <p>Create your account to start managing files</p>
+      </div>
+
+      <div class="card auth-container">
+        <div class="auth-card">
+          <h2>Create Account</h2>
+
+          <div id="statusMessage"></div>
+
+          <form id="registerForm">
+            <div class="form-group">
+              <label for="regName">Full Name</label>
+              <input
+                type="text"
+                id="regName"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="regEmail">Email Address</label>
+              <input
+                type="email"
+                id="regEmail"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="regPassword">Password</label>
+              <input
+                type="password"
+                id="regPassword"
+                placeholder="Choose a strong password"
+                required
+                minlength="6"
+              />
+              <small style="color: #6b7280; font-size: 0.85rem"
+                >Minimum 6 characters</small
+              >
+            </div>
+            <div class="form-group">
+              <label for="regPasswordConfirm">Confirm Password</label>
+              <input
+                type="password"
+                id="regPasswordConfirm"
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%">
+              <span class="btn-text">Create Account</span>
+              <span class="loading hidden"></span>
+            </button>
+          </form>
+
+          <div class="auth-toggle">
+            <p>
+              Already have an account? <a href="login.html">Sign in here</a>
+            </p>
+            <p><a href="landing.html">← Back to Home</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+      // DOM Elements
+      const statusMessage = document.getElementById('statusMessage');
+      const registerForm = document.getElementById('registerForm');
+
+      // Utility Functions
+      function showStatus(element, message, type = 'info') {
+        element.innerHTML = `<div class="status ${type}">${message}</div>`;
+      }
+
+      function showLoading(button, show) {
+        const btnText = button.querySelector('.btn-text');
+        const loading = button.querySelector('.loading');
+
+        if (show) {
+          btnText.style.display = 'none';
+          loading.classList.remove('hidden');
+          button.disabled = true;
+        } else {
+          btnText.style.display = 'inline';
+          loading.classList.add('hidden');
+          button.disabled = false;
+        }
+      }
+
+      // API Functions
+      async function apiRequest(endpoint, options = {}) {
+        const url = `${API_BASE_URL}${endpoint}`;
+        const defaultHeaders = {
+          'Content-Type': 'application/json',
+        };
+
+        const requestOptions = {
+          ...options,
+          headers: {
+            ...defaultHeaders,
+            ...options.headers,
+          },
+        };
+
+        try {
+          const response = await fetch(url, requestOptions);
+
+          if (
+            response.headers.get('content-type')?.includes('application/json')
+          ) {
+            const data = await response.json();
+            return { response, data };
+          } else {
+            const text = await response.text();
+            return { response, data: { message: text } };
+          }
+        } catch (error) {
+          return { error: error.message };
+        }
+      }
+
+      async function register(name, email, password) {
+        const { response, data, error } = await apiRequest('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ name, email, password }),
+        });
+
+        if (error) {
+          throw new Error(`Network error: ${error}`);
+        }
+
+        if (response.status === 201) {
+          // Store authentication data
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+          return data;
+        } else {
+          throw new Error(data.msg || 'Registration failed');
+        }
+      }
+
+      // Form validation
+      function validatePasswords() {
+        const password = document.getElementById('regPassword').value;
+        const confirmPassword =
+          document.getElementById('regPasswordConfirm').value;
+
+        if (password !== confirmPassword) {
+          showStatus(statusMessage, 'Passwords do not match', 'error');
+          return false;
+        }
+
+        if (password.length < 6) {
+          showStatus(
+            statusMessage,
+            'Password must be at least 6 characters long',
+            'error'
+          );
+          return false;
+        }
+
+        return true;
+      }
+
+      // Event Listeners
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!validatePasswords()) {
+          return;
+        }
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        showLoading(submitBtn, true);
+
+        try {
+          const name = document.getElementById('regName').value;
+          const email = document.getElementById('regEmail').value;
+          const password = document.getElementById('regPassword').value;
+
+          await register(name, email, password);
+          showStatus(
+            statusMessage,
+            'Registration successful! Redirecting to dashboard...',
+            'success'
+          );
+
+          // Redirect to dashboard after a short delay
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } catch (error) {
+          showStatus(statusMessage, error.message, 'error');
+        } finally {
+          showLoading(submitBtn, false);
+        }
+      });
+
+      // Real-time password validation
+      document
+        .getElementById('regPasswordConfirm')
+        .addEventListener('input', () => {
+          const password = document.getElementById('regPassword').value;
+          const confirmPassword =
+            document.getElementById('regPasswordConfirm').value;
+
+          if (confirmPassword && password !== confirmPassword) {
+            document.getElementById('regPasswordConfirm').style.borderColor =
+              '#ef4444';
+          } else {
+            document.getElementById('regPasswordConfirm').style.borderColor =
+              '#e2e8f0';
+          }
+        });
+
+      // Check if user is already logged in
+      window.addEventListener('load', () => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          window.location.href = 'dashboard.html';
+        }
+      });
+    </script>
+  </body>
+</html>

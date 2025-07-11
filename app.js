@@ -28,7 +28,7 @@ app.use('/api/v1/files', authenticateUser, files);
 
 // Serve the frontend
 app.get('/', (req, res) => {
-  res.sendFile('index.html', { root: 'public' });
+  res.sendFile('landing.html', { root: 'public' });
 });
 
 app.use(notFoundMiddleware);

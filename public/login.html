@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - Kaleidoscope</title>
+    <link rel="stylesheet" href="styles/app.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-title">
+        <h1>🔑 Welcome Back</h1>
+        <p>Sign in to access your files</p>
+      </div>
+
+      <div class="card auth-container">
+        <div class="auth-card">
+          <h2>Login</h2>
+
+          <div id="statusMessage"></div>
+
+          <form id="loginForm">
+            <div class="form-group">
+              <label for="loginEmail">Email Address</label>
+              <input
+                type="email"
+                id="loginEmail"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">Password</label>
+              <input
+                type="password"
+                id="loginPassword"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%">
+              <span class="btn-text">Sign In</span>
+              <span class="loading hidden"></span>
+            </button>
+          </form>
+
+          <div class="auth-toggle">
+            <p>
+              Don't have an account? <a href="register.html">Create one here</a>
+            </p>
+            <p><a href="landing.html">← Back to Home</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+      // DOM Elements
+      const statusMessage = document.getElementById('statusMessage');
+      const loginForm = document.getElementById('loginForm');
+
+      // Utility Functions
+      function showStatus(element, message, type = 'info') {
+        element.innerHTML = `<div class="status ${type}">${message}</div>`;
+      }
+
+      function showLoading(button, show) {
+        const btnText = button.querySelector('.btn-text');
+        const loading = button.querySelector('.loading');
+
+        if (show) {
+          btnText.style.display = 'none';
+          loading.classList.remove('hidden');
+          button.disabled = true;
+        } else {
+          btnText.style.display = 'inline';
+          loading.classList.add('hidden');
+          button.disabled = false;
+        }
+      }
+
+      // API Functions
+      async function apiRequest(endpoint, options = {}) {
+        const url = `${API_BASE_URL}${endpoint}`;
+        const defaultHeaders = {
+          'Content-Type': 'application/json',
+        };
+
+        const requestOptions = {
+          ...options,
+          headers: {
+            ...defaultHeaders,
+            ...options.headers,
+          },
+        };
+
+        try {
+          const response = await fetch(url, requestOptions);
+
+          if (
+            response.headers.get('content-type')?.includes('application/json')
+          ) {
+            const data = await response.json();
+            return { response, data };
+          } else {
+            const text = await response.text();
+            return { response, data: { message: text } };
+          }
+        } catch (error) {
+          return { error: error.message };
+        }
+      }
+
+      async function login(email, password) {
+        const { response, data, error } = await apiRequest('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (error) {
+          throw new Error(`Network error: ${error}`);
+        }
+
+        if (response.status === 200) {
+          // Store authentication data
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('currentUser', JSON.stringify(data.user));
+          return data;
+        } else {
+          throw new Error(data.msg || 'Login failed');
+        }
+      }
+
+      // Event Listeners
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        showLoading(submitBtn, true);
+
+        try {
+          const email = document.getElementById('loginEmail').value;
+          const password = document.getElementById('loginPassword').value;
+
+          await login(email, password);
+          showStatus(
+            statusMessage,
+            'Login successful! Redirecting...',
+            'success'
+          );
+
+          // Redirect to dashboard after a short delay
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } catch (error) {
+          showStatus(statusMessage, error.message, 'error');
+        } finally {
+          showLoading(submitBtn, false);
+        }
+      });
+
+      // Check if user is already logged in
+      window.addEventListener('load', () => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          window.location.href = 'dashboard.html';
+        }
+      });
+    </script>
+  </body>
+</html>
