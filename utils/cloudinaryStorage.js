@@ -55,7 +55,7 @@ export async function uploadToBlob(content, blobName, containerName) {
   }
 }
 
-// Download from Cloudinary (returns the file URL)
+// Download from Cloudinary and save to file (legacy function - still used for compatibility)
 export async function downloadBlobToFile(
   blobName,
   fileNameWithPath,
@@ -104,6 +104,48 @@ export async function downloadBlobToFile(
     );
 
     return { success: true, url: fileUrl };
+  } catch (error) {
+    console.error(`❌ Error downloading ${blobName}:`, error);
+    throw error;
+  }
+}
+
+// Download from Cloudinary and return as buffer (for streaming)
+export async function downloadBlobAsBuffer(blobName, containerName) {
+  try {
+    const publicId = `${containerName}/${blobName}`;
+
+    console.log(`🔍 Cloudinary download buffer - Public ID: ${publicId}`);
+
+    // Determine if it's an image or raw file based on extension
+    const extension = blobName.split('.').pop()?.toLowerCase();
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+    const resourceType = imageExtensions.includes(extension) ? 'image' : 'raw';
+
+    console.log(`📥 Downloading ${blobName} as resource type: ${resourceType}`);
+
+    // Get the file URL from Cloudinary
+    const fileUrl = cloudinary.url(publicId, {
+      resource_type: resourceType,
+      type: 'upload',
+    });
+
+    console.log(`Attempting to download from URL: ${fileUrl}`);
+
+    // Download the file using fetch
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to download file: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const buffer = await response.arrayBuffer();
+    console.log(
+      `📥 Download of ${blobName} success - buffer size: ${buffer.byteLength} bytes`
+    );
+
+    return Buffer.from(buffer);
   } catch (error) {
     console.error(`❌ Error downloading ${blobName}:`, error);
     throw error;

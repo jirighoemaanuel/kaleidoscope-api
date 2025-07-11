@@ -9,6 +9,7 @@ import { StatusCodes } from 'http-status-codes';
 import {
   uploadToBlob,
   downloadBlobToFile,
+  downloadBlobAsBuffer,
   deleteBlob,
 } from '../utils/cloudinaryStorage.js';
 
@@ -47,67 +48,59 @@ export const getAllFiles = async (req, res) => {
 };
 
 export const getFile = async (req, res) => {
-  const fileId = req.params.fileId;
-
-  console.log(`🔍 Looking for file with ID: ${fileId}`);
-
-  // First, find the file in the database to get the actual filename
-  const fileRecord = await File.findOne({
-    _id: fileId,
-    createdBy: req.user.userId,
-  });
-
-  console.log(`📄 File record found:`, fileRecord);
-
-  if (!fileRecord) {
-    throw new NotFoundError('File not found');
-  }
-
-  // Use the filename from the database record for Cloudinary lookup
-  const actualFilename = fileRecord.filename;
-  const filePath = `public/downloads/${actualFilename}`;
-  const resolvedPath = path.resolve(filePath);
-
-  console.log(
-    `⬇️ Downloading from Cloudinary: ${actualFilename} to ${resolvedPath}`
-  );
-
   try {
-    // Download the file from Cloudinary using the stored filename
-    await downloadBlobToFile(
+    const fileId = req.params.fileId;
+
+    console.log(`🔍 Looking for file with ID: ${fileId}`);
+
+    // First, find the file in the database to get the actual filename
+    const fileRecord = await File.findOne({
+      _id: fileId,
+      createdBy: req.user.userId,
+    });
+
+    console.log(`📄 File record found:`, fileRecord);
+
+    if (!fileRecord) {
+      throw new NotFoundError('File not found');
+    }
+
+    // Use the filename from the database record for Cloudinary lookup
+    const actualFilename = fileRecord.filename;
+
+    console.log(
+      `⬇️ Downloading from Cloudinary: ${actualFilename} from user-${req.user.userId}`
+    );
+
+    // Download the file buffer directly from Cloudinary
+    const fileBuffer = await downloadBlobAsBuffer(
       actualFilename,
-      resolvedPath,
       `user-${req.user.userId}`
     );
 
     const mimeType =
-      mime.lookup(resolvedPath) ||
       fileRecord.mimeType ||
+      mime.lookup(actualFilename) ||
       'application/octet-stream';
+
     res.setHeader('Content-Type', mimeType);
     res.setHeader(
       'Content-Disposition',
       `attachment; filename="${fileRecord.originalName || actualFilename}"`
     );
+    res.setHeader('Content-Length', fileBuffer.length);
 
-    res.sendFile(resolvedPath, (err) => {
-      if (err) {
-        console.error(`Error sending file: ${err}`);
-        throw new NotFoundError('File not found');
-      } else {
-        console.log(`✅ File sent successfully: ${actualFilename}`);
-        res.status(StatusCodes.OK);
-        // Delete the temporary file after sending it
-        fs.unlink(resolvedPath, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error(`Error deleting temporary file: ${unlinkErr}`);
-          }
-        });
-      }
-    });
+    console.log(
+      `✅ File sent successfully: ${actualFilename} (${fileBuffer.length} bytes)`
+    );
+    res.send(fileBuffer);
+
   } catch (error) {
-    console.error(`Error downloading file: ${error}`);
-    throw new NotFoundError('File not found or unable to download');
+    console.error(`❌ Error downloading file: ${error}`);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      msg: 'File not found or unable to download',
+      error: error.message
+    });
   }
 };
 
