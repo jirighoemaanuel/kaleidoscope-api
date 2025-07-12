@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Download Test</title>
+  </head>
+  <body>
+    <h1>Download Test</h1>
+    <p>Upload a file first, then try to download it to test the fix.</p>
+
+    <script>
+      const API_BASE_URL = 'https://kaleidoscope-l6lj.onrender.com/api/v1';
+
+      async function testDownload(fileId) {
+        try {
+          console.log('Starting download test for file:', fileId);
+
+          const authToken = localStorage.getItem('authToken');
+          if (!authToken) {
+            console.error('No auth token found');
+            return;
+          }
+
+          const response = await fetch(`${API_BASE_URL}/files/${fileId}`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+
+          console.log('Response status:', response.status);
+          console.log('Response ok:', response.ok);
+          console.log('Response headers:', [...response.headers.entries()]);
+
+          if (response.ok) {
+            const blob = await response.blob();
+            console.log('Blob size:', blob.size);
+            console.log('Blob type:', blob.type);
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'test-download';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            console.log('Download initiated successfully');
+          } else {
+            const errorText = await response.text();
+            console.error('Download failed:', response.status, errorText);
+          }
+        } catch (error) {
+          console.error('Download error:', error);
+        }
+      }
+
+      // Add this function to window for testing
+      window.testDownload = testDownload;
+    </script>
+  </body>
+</html>

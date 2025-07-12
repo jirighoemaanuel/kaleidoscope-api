@@ -94,12 +94,11 @@ export const getFile = async (req, res) => {
       `✅ File sent successfully: ${actualFilename} (${fileBuffer.length} bytes)`
     );
     res.send(fileBuffer);
-
   } catch (error) {
     console.error(`❌ Error downloading file: ${error}`);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       msg: 'File not found or unable to download',
-      error: error.message
+      error: error.message,
     });
   }
 };
